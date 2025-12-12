@@ -1,4 +1,4 @@
-# Spring AI RAG
+# Spring AI RAG: A RAG-Based Financial Advisory System
 
 A demonstration project showcasing **Retrieval-Augmented Generation (RAG)** using **Spring AI** and **OpenAI GPT models**.  
 This application enables intelligent document querying by combining the power of **Large Language Models (LLMs)** with **local document context** stored in a vector database.
@@ -57,19 +57,24 @@ The project uses the following Spring Boot starters and Spring AI dependencies:
 
 # Getting Started
 
-## Configure your environment variables:
+## 1. Configure your environment variables:
 ```
 OPENAI_API_KEY=your_api_key_here
-Update application.properties:
+```
+
+## 2. Update application.properties:
+```
 spring.ai.openai.api-key=${OPENAI_API_KEY}
 spring.ai.openai.chat.model=gpt-4
 spring.ai.vectorstore.pgvector.initialize-schema=true
 ```
-### Place your PDF documents in the src/main/resources/docs directory
-### Running the Application
-### Start Docker Desktop
+## 3. Place your PDF documents in the src/main/resources/docs directory
 
-### Launch the application:
+# Running the Application
+
+## 1. Start Docker Desktop
+
+## 2. Launch the application:
 ```
 ./mvnw spring-boot:run
 ```
@@ -99,5 +104,66 @@ public class IngestionService implements CommandLineRunner {
 }
 ```
 <img width="1920" height="1128" alt="Screenshot 2025-12-11 201112" src="https://github.com/user-attachments/assets/4803e9ea-925a-4cba-8891-8c77a24bae22" />
+
+
 <img width="1900" height="1081" alt="Screenshot 2025-12-11 201305" src="https://github.com/user-attachments/assets/e89c6ca6-7820-446c-8c56-032ba95dac83" />
+
+## ChatController
+The ChatController provides the REST endpoint for querying documents:
+```
+@RestController
+public class ChatController {
+    private final ChatClient chatClient;
+
+    public ChatController(ChatClient.Builder builder, VectorStore vectorStore) {
+        this.chatClient = builder
+                .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore))
+                .build();
+    }
+
+    @GetMapping("/")
+    public String chat() {
+        return chatClient.prompt()
+                .user("Your question here")
+                .call()
+                .content();
+    }
+}
+```
+
+# Making Requests
+Query the API using curl or your preferred HTTP client:
+```
+curl http://localhost:8080/
+```
+The response will include context from your documents along with the LLM's analysis.
+
+<img width="1920" height="1128" alt="Screenshot 2025-12-11 212616" src="https://github.com/user-attachments/assets/a42d0204-2841-4742-b93e-2d1dc3b54b0f" />
+
+
+# Architecture Highlights
+- Document Processing: Uses Spring AI's PDF document reader to parse documents into manageable chunks
+- Vector Storage: Utilizes PGVector for efficient similarity searches
+- Context Retrieval: Automatically retrieves relevant document segments based on user queries
+- Response Generation: Combines document context with GPT-4's capabilities for informed responses
+
+# Best Practices
+1. Document Ingestion
+
+- Consider implementing checks before reinitializing the vector store
+- Use scheduled tasks for document updates
+- Implement proper error handling for document processing
+
+2. Query Optimization
+- Monitor token usage
+- Implement rate limiting
+- Cache frequently requested information
+
+3. Security
+- Secure your API endpoints
+- Protect sensitive document content
+- Safely manage API keys
+
+
+
 
